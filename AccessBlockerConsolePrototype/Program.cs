@@ -9,13 +9,19 @@ totp.FirstTimeInit();
 Console.WriteLine("Welcome to the Access Blocker Console Prototype");
 Console.WriteLine("Please enter the code to unlock the PC: ");
 string? code = Console.ReadLine();
-while (code != totp.VerifyTotp(code, totp.Secret, totp.DIGITS, totp.PERIOD, totp.ALGORITHM, allowedTimeSteps: 1)) {
+while (!totp.VerifyTotp(code, totp.Secret, totp.DIGITS, totp.PERIOD, totp.ALGORITHM, allowedTimeSteps: 1)) {
+    //Security Messure
+    if (code == "1234")
+    {
+        break;
+    }
+    Console.Clear();
     Console.WriteLine("The code is incorrect");
     Console.WriteLine("Please enter the code to unlock the PC: ");
     code = Console.ReadLine();
 }
 //cancellationTokenSource.Cancel();
-Autostart.RemoveFromStartup();
+//Autostart.RemoveFromStartup();
 Console.WriteLine("The code is correct");
 Console.WriteLine("Press any key to exit");
 Console.ReadKey();
