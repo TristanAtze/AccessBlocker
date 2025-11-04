@@ -2,25 +2,56 @@ using System.Security.Cryptography;
 using System.Text;
 
 public class Totp {
-    public static void FirstTimeInit(){
+    //Properties
+    public string SECRET_FILE_NAME { get; set; }
+    public string QRCODE_FOLDER_NAME { get; set; }
+    public int DIGITS { get; set; }
+    public int PERIOD { get; set; }
+    public string ALGORITHM { get; set; }
+    public string Secret { get; set; }
+
+
+    //Constructor
+    public Totp(string SECRET_FILE_NAME, string QRCODE_FOLDER_NAME, int DIGITS, int PERIOD, string ALGORITHM) {
+        this.SECRET_FILE_NAME = SECRET_FILE_NAME;
+        this.QRCODE_FOLDER_NAME = QRCODE_FOLDER_NAME;
+        this.DIGITS = DIGITS;
+        this.PERIOD = PERIOD;
+        this.ALGORITHM = ALGORITHM;
+    }
+
+    //Constructor with default values
+    public Totp() {
+        this.SECRET_FILE_NAME = "secret.txt";
+        this.QRCODE_FOLDER_NAME = "QRCODE";
+        this.DIGITS = 6;
+        this.PERIOD = 30;
+        this.ALGORITHM = "SHA1";
+    }
+
+    public void FirstTimeInit(){
+        //Check if the secret.txt file exists
+        if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), SECRET_FILE_NAME))) {
+            Secret = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), SECRET_FILE_NAME));
+            return;
+        }
         var secret = GenerateRandomSecret(20);
         var base32Secret = Base32Encode(secret);
-        int digits = 6;
-        int period = 30;
         Console.WriteLine("Secret (base32): " + base32Secret);
         Console.WriteLine();
         string issuer = "AccessBlockerConsolePrototype";
         string account = "AccessBlockerConsolePrototype";
 
-        string provisioningUri = GetTotpProvisioningUri(account, issuer, base32Secret, digits: digits, period: period, algorithm: "SHA1");
+        string provisioningUri = GetTotpProvisioningUri(account, issuer, base32Secret, digits: DIGITS, period: PERIOD, algorithm: ALGORITHM);
         Console.WriteLine("Provisioning URI (use as QR payload):");
         Console.WriteLine(provisioningUri);
         QRCodeGenerate.GenerateQRCode(provisioningUri);
-        QRCodeGenerate.DisplayQRCodeImage(Path.Combine(Directory.GetCurrentDirectory(), "QRCODE", "QRCode.png"));
+        QRCodeGenerate.DisplayQRCodeImage(Path.Combine(Directory.GetCurrentDirectory(), QRCODE_FOLDER_NAME, "QRCode.png"));
         Console.WriteLine("Please scan the QR code with your authenticator app");
         Console.WriteLine("Enter the code to verify: ");
+        //Generate a random code        
         string code = Console.ReadLine();
-        bool ok = VerifyTotp(code, secret, digits, period, HashAlgorithmName.SHA1, allowedTimeSteps: 1);
+        bool ok = VerifyTotp(code, secret, DIGITS, PERIOD, HashAlgorithmName.SHA1, allowedTimeSteps: 1);
         if (ok) {
             Console.WriteLine("Code is correct");
         } else {
@@ -28,6 +59,7 @@ public class Totp {
         }
         Console.WriteLine("Press any key continue");
         Console.ReadKey();
+        File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), SECRET_FILE_NAME), base32Secret);
     }
     
 
